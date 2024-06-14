@@ -1,175 +1,160 @@
-import speech_recognition as sr
+import os
+import time
 import smtplib
-# import pyaudio
-# import platform
-# import sys
-from bs4 import BeautifulSoup
-import email
+import logging
 import imaplib
+import email
+import speech_recognition as sr
+from bs4 import BeautifulSoup
 from gtts import gTTS
 import pyglet
-import os, time
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
 
-#pyglet.lib.load_library('avbin')
-#pyglet.have_avbin=True
+# Load environment variables from .env file
+load_dotenv()
 
-#project: :. Project: Voice based Email for blind :. 
-# Author: Sayak Naskar
+# Setting up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-#fetch project name
-tts = gTTS(text="Project: Voice based Email for blind", lang='en')
-ttsname=("name.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-tts.save(ttsname)
+# Environment variables for security
+EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
+RECIPIENT_EMAIL = os.getenv('RECIPIENT_EMAIL')
 
-music = pyglet.media.load(ttsname, streaming = False)
-music.play()
-
-time.sleep(music.duration)
-os.remove(ttsname)
-
-#login from os
-login = os.getlogin
-print ("You are logging from : "+login())
-
-#choices
-print ("1. composed a mail.")
-tts = gTTS(text="option 1. composed a mail.", lang='en')
-ttsname=("hello.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-tts.save(ttsname)
-
-music = pyglet.media.load(ttsname, streaming = False)
-music.play()
-
-time.sleep(music.duration)
-os.remove(ttsname)
-
-print ("2. Check your inbox")
-tts = gTTS(text="option 2. Check your inbox", lang='en')
-ttsname=("second.mp3")
-tts.save(ttsname)
-
-music = pyglet.media.load(ttsname, streaming = False)
-music.play()
-
-time.sleep(music.duration)
-os.remove(ttsname)
-
-#this is for input choices
-tts = gTTS(text="Your choice ", lang='en')
-ttsname=("hello.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-tts.save(ttsname)
-
-music = pyglet.media.load(ttsname, streaming = False)
-music.play()
-
-time.sleep(music.duration)
-os.remove(ttsname)
-
-#voice recognition part
-r = sr.Recognizer()
-with sr.Microphone() as source:
-    print ("Your choice:")
-    audio=r.listen(source)
-    print ("ok done!!")
-
-try:
-    text=r.recognize_google(audio)
-    print ("You said : "+text)
-    
-except sr.UnknownValueError:
-    print("Google Speech Recognition could not understand audio.")
-     
-except sr.RequestError as e:
-    print("Could not request results from Google Speech Recognition service; {0}".format(e)) 
-
-#choices details
-if text == '1' or text == 'One' or text == 'one':
-    r = sr.Recognizer() #recognize
-    with sr.Microphone() as source:
-        print ("Your message :")
-        audio=r.listen(source)
-        print ("ok done!!")
+def play_text(text):
     try:
-        text1=r.recognize_google(audio)
-        print ("You said : "+text1)
-        msg = text1
-    except sr.UnknownValueError:
-        print("Google Speech Recognition could not understand audio.")
-    except sr.RequestError as e:
-        print("Could not request results from Google Speech Recognition service; {0}".format(e))    
+        logging.info(f"Playing text: {text}")
+        tts = gTTS(text=text, lang='en')
+        ttsname = "temp.mp3"
+        tts.save(ttsname)
+        music = pyglet.media.load(ttsname, streaming=False)
+        music.play()
+        time.sleep(music.duration)
+        os.remove(ttsname)
+    except Exception as e:
+        logging.error(f"Error in play_text: {e}")
 
-    mail = smtplib.SMTP('smtp.gmail.com',587)    #host and port area
-    mail.ehlo()  #Hostname to send for this command defaults to the FQDN of the local host.
-    mail.starttls() #security connection
-    mail.login('emailID','pswrd') #login part
-    mail.sendmail('emailID','victimID',msg) #send part
-    print ("Congrates! Your mail has send. ")
-    tts = gTTS(text="Congrates! Your mail has send. ", lang='en')
-    ttsname=("send.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-    tts.save(ttsname)
-    music = pyglet.media.load(ttsname, streaming = False)
-    music.play()
-    time.sleep(music.duration)
-    os.remove(ttsname)
-    mail.close()   
-    
-if text == '2' or text == 'tu' or text == 'two' or text == 'Tu' or text == 'to' or text == 'To' :
-    mail = imaplib.IMAP4_SSL('imap.gmail.com',993) #this is host and port area.... ssl security
-    unm = ('your mail or victim mail')  #username
-    psw = ('pswrd')  #password
-    mail.login(unm,psw)  #login
-    stat, total = mail.select('Inbox')  #total number of mails in inbox
-    print ("Number of mails in your inbox :"+str(total))
-    tts = gTTS(text="Total mails are :"+str(total), lang='en') #voice out
-    ttsname=("total.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-    tts.save(ttsname)
-    music = pyglet.media.load(ttsname, streaming = False)
-    music.play()
-    time.sleep(music.duration)
-    os.remove(ttsname)
-    
-    #unseen mails
-    unseen = mail.search(None, 'UnSeen') # unseen count
-    print ("Number of UnSeen mails :"+str(unseen))
-    tts = gTTS(text="Your Unseen mail :"+str(unseen), lang='en')
-    ttsname=("unseen.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-    tts.save(ttsname)
-    music = pyglet.media.load(ttsname, streaming = False)
-    music.play()
-    time.sleep(music.duration)
-    os.remove(ttsname)
-    
-    #search mails
-    result, data = mail.uid('search',None, "ALL")
-    inbox_item_list = data[0].split()
-    new = inbox_item_list[-1]
-    old = inbox_item_list[0]
-    result2, email_data = mail.uid('fetch', new, '(RFC822)') #fetch
-    raw_email = email_data[0][1].decode("utf-8") #decode
-    email_message = email.message_from_string(raw_email)
-    print ("From: "+email_message['From'])
-    print ("Subject: "+str(email_message['Subject']))
-    tts = gTTS(text="From: "+email_message['From']+" And Your subject: "+str(email_message['Subject']), lang='en')
-    ttsname=("mail.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-    tts.save(ttsname)
-    music = pyglet.media.load(ttsname, streaming = False)
-    music.play()
-    time.sleep(music.duration)
-    os.remove(ttsname)
-    
-    #Body part of mails
-    stat, total1 = mail.select('Inbox')
-    stat, data1 = mail.fetch(total1[0], "(UID BODY[TEXT])")
-    msg = data1[0][1]
-    soup = BeautifulSoup(msg, "html.parser")
-    txt = soup.get_text()
-    print ("Body :"+txt)
-    tts = gTTS(text="Body: "+txt, lang='en')
-    ttsname=("body.mp3") #Example: path -> C:\Users\sayak\Desktop> just change with your desktop directory. Don't use my directory.
-    tts.save(ttsname)
-    music = pyglet.media.load(ttsname, streaming = False)
-    music.play()
-    time.sleep(music.duration)
-    os.remove(ttsname)
-    mail.close()
-    mail.logout()
+def get_login_user():
+    try:
+        login_user = os.getlogin()
+        logging.info(f"User logged in: {login_user}")
+        play_text(f"You are logging in from: {login_user}")
+        return login_user
+    except Exception as e:
+        logging.error(f"Error in get_login_user: {e}")
+        play_text("Error retrieving login user.")
+
+def recognize_speech(prompt_text):
+    try:
+        r = sr.Recognizer()
+        with sr.Microphone() as source:
+            play_text(prompt_text)
+            logging.info(f"Listening for: {prompt_text}")
+            audio = r.listen(source)
+            logging.info("Processing audio...")
+        result = r.recognize_google(audio)
+        logging.info(f"Recognized speech: {result}")
+        return result
+    except sr.UnknownValueError:
+        logging.error("Google Speech Recognition could not understand audio.")
+        play_text("Sorry, I could not understand the audio. Please try again.")
+    except sr.RequestError as e:
+        logging.error(f"Request error from Google Speech Recognition service: {e}")
+        play_text("Could not request results from the speech recognition service.")
+    except Exception as e:
+        logging.error(f"Error in recognize_speech: {e}")
+        play_text("An error occurred while recognizing speech.")
+    return ""
+
+def send_email(subject, msg):
+    try:
+        logging.info("Sending email...")
+        with smtplib.SMTP('smtp.gmail.com', 587) as mail:
+            mail.ehlo()
+            mail.starttls()
+            mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            message = MIMEMultipart()
+            message['From'] = EMAIL_ADDRESS
+            message['To'] = RECIPIENT_EMAIL
+            message['Subject'] = subject
+            message.attach(MIMEText(msg, 'plain'))
+            mail.send_message(message)
+        logging.info("Email sent successfully.")
+        play_text("Congrats! Your mail has been sent.")
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        play_text("Failed to send the email. Please try again later.")
+
+def check_inbox():
+    try:
+        logging.info("Checking inbox...")
+        with imaplib.IMAP4_SSL('imap.gmail.com', 993) as mail:
+            mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            mail.select('inbox')
+
+            result, data = mail.search(None, 'ALL')
+            mail_ids = data[0].split()
+            logging.info(f"Number of emails in the inbox: {len(mail_ids)}")
+            play_text(f"Total mails are: {len(mail_ids)}")
+
+            result, data = mail.search(None, 'UNSEEN')
+            unseen_ids = data[0].split()
+            logging.info(f"Number of unseen emails: {len(unseen_ids)}")
+            play_text(f"Your unseen mail count is: {len(unseen_ids)}")
+
+            if mail_ids:
+                result, email_data = mail.fetch(mail_ids[-1], '(RFC822)')
+                raw_email = email_data[0][1].decode("utf-8")
+                email_message = email.message_from_string(raw_email)
+
+                from_ = email_message['From']
+                subject = email_message['Subject']
+                logging.info(f"From: {from_}, Subject: {subject}")
+                play_text(f"From: {from_} and the subject is: {subject}")
+
+                if email_message.is_multipart():
+                    for part in email_message.walk():
+                        if part.get_content_type() == "text/plain":
+                            body = part.get_payload(decode=True).decode("utf-8")
+                            logging.info(f"Email body: {body}")
+                            play_text(f"Body: {body}")
+                            break
+                else:
+                    body = email_message.get_payload(decode=True).decode("utf-8")
+                    logging.info(f"Email body: {body}")
+                    play_text(f"Body: {body}")
+
+        logging.info("Inbox checked successfully.")
+    except Exception as e:
+        logging.error(f"Failed to check inbox: {e}")
+        play_text("Failed to check the inbox. Please try again later.")
+
+def main():
+    play_text("Project: Voice based Email for the blind")
+
+    get_login_user()
+
+    play_text("Option 1. Compose a mail.")
+    play_text("Option 2. Check your inbox.")
+    play_text("Your choice")
+
+    choice = recognize_speech("Please say your choice.")
+
+    if 'one' in choice.lower() or '1' in choice:
+        subject = recognize_speech("Please state the subject of your email.")
+        message = recognize_speech("Please state your message.")
+        send_email(subject, message)
+    elif 'two' in choice.lower() or '2' in choice:
+        check_inbox()
+    else:
+        logging.error("Invalid choice made by user.")
+        play_text("Invalid choice, please try again.")
+
+if __name__ == "__main__":
+    if not EMAIL_ADDRESS or not EMAIL_PASSWORD or not RECIPIENT_EMAIL:
+        logging.error("Email credentials are not set in environment variables.")
+        play_text("Email credentials are not set. Please set the required environment variables and try again.")
+    else:
+        main()
